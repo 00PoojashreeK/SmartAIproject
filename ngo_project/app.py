@@ -16,55 +16,44 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-/* Responsive styling for both light and dark modes */
-
-:root {
-    --primary-dark: #1b4332;
-    --primary-medium: #2d6a4f;
-    --primary-light: #40916c;
-    --bg-light: #edf6f9;
-    --bg-accent: #d8f3dc;
-    --text-dark: #1b4332;
-    --text-light: #555;
-}
+/* Consistent styling - works same in light and dark mode */
 
 .stApp {
-    background: linear-gradient(120deg, #edf6f9, #d8f3dc);
+    background: linear-gradient(120deg, #edf6f9, #d8f3dc) !important;
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    .stApp {
-        background: linear-gradient(120deg, #0f2818, #1b3d2f);
-    }
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(120deg, #edf6f9, #d8f3dc) !important;
+}
+
+.main {
+    background: linear-gradient(120deg, #edf6f9, #d8f3dc) !important;
 }
 
 .main-title {
     font-size: 48px;
     font-weight: 800;
-    color: #1b4332;
+    color: #1b4332 !important;
     text-align: center;
 }
 
 .sub-title {
     text-align: center;
     font-size: 18px;
-    color: #555;
+    color: #555 !important;
 }
 
 .stButton>button {
-    background: linear-gradient(90deg, #2d6a4f, #40916c);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    background: linear-gradient(90deg, #2d6a4f, #40916c) !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 20px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
 }
 
 .stButton>button:hover {
-    background: linear-gradient(90deg, #1b4332, #2d6a4f);
-    transform: scale(1.02);
+    background: linear-gradient(90deg, #1b4332, #2d6a4f) !important;
 }
 
 section[data-testid="stSidebar"] {
@@ -76,34 +65,20 @@ section[data-testid="stSidebar"] * {
 }
 
 .card {
-    padding: 20px;
-    border-radius: 15px;
-    background: white;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-@media (prefers-color-scheme: dark) {
-    .card {
-        background: #1e1e1e;
-        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.5);
-        color: white;
-    }
+    padding: 20px !important;
+    border-radius: 15px !important;
+    background: white !important;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1) !important;
+    text-align: center !important;
+    color: #1b4332 !important;
 }
 
 .login-box {
-    background: white;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.15);
-}
-
-@media (prefers-color-scheme: dark) {
-    .login-box {
-        background: #2d2d2d;
-        box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.5);
-        color: white;
-    }
+    background: white !important;
+    padding: 40px !important;
+    border-radius: 20px !important;
+    box-shadow: 0px 10px 40px rgba(0, 0, 0, 0.15) !important;
+    color: #1b4332 !important;
 }
 
 </style>
