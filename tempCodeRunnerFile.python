@@ -1,0 +1,32 @@
+import random
+import csv
+
+# Sample states and villages
+states = ["Karnataka", "Maharashtra", "Tamil Nadu", "Kerala", "Uttar Pradesh", "Bihar", "Rajasthan", "Gujarat", "West Bengal", "Assam"]
+villages = ["Rampur", "Sundarpur", "Lakshmipur", "Rajapur", "Devgaon", "Chandpur", "Bhagalpur", "Sitapur", "Gopalpur", "Nandgaon"]
+
+food_levels = ["Low", "Medium", "High"]
+medical_levels = ["Low", "Medium", "High"]
+
+# Generate dataset
+rows = []
+for i in range(600):  # more than 500 entries
+    place = random.choice(villages) + "_" + str(i)
+    state = random.choice(states)
+    latitude = round(random.uniform(8.0, 35.0), 6)
+    longitude = round(random.uniform(68.0, 97.0), 6)
+    people_in_need = random.randint(50, 5000)
+    volunteers = random.randint(5, 500)
+    ngo_available = random.choice([0, 1])
+    food_need = random.choice(food_levels)
+    medical_need = random.choice(medical_levels)
+
+    rows.append([place, state, latitude, longitude, people_in_need, volunteers, ngo_available, food_need, medical_need])
+
+# Save to CSV
+with open("relief_dataset.csv", "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(["PlaceName", "State", "Latitude", "Longitude", "People_in_need", "Volunteers", "NGO_available", "Food_need", "Medical_need"])
+    writer.writerows(rows)
+
+print("Dataset with 600 entries created: relief_dataset.csv")
