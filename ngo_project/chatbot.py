@@ -1,23 +1,42 @@
 import streamlit as st
 import pandas as pd
 import os
-import google.generativeai as genai
+import google.genai as genai
 from dotenv import load_dotenv
 import traceback
 
 
 # ---------- Load API Key ----------
 load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
+
+# Try to get API key from Streamlit secrets first (for Cloud deployment)
+# Then fall back to .env file (for local development)
+api_key = None
+
+try:
+    api_key = st.secrets.get("GEMINI_API_KEY")
+except:
+    api_key = os.getenv("GEMINI_API_KEY")
 
 # Validate API key
 if not api_key or api_key == "your_gemini_api_key_here":
-    st.error("❌ GEMINI_API_KEY not configured in .env file")
+    st.error("""
+    ❌ GEMINI_API_KEY not configured
+    
+    **For local development:**
+    1. Open `.env` file in ngo_project folder
+    2. Add your Gemini API key: `GEMINI_API_KEY=your_key_here`
+    3. Get it from: https://aistudio.google.com/app/apikey
+    
+    **For Streamlit Cloud deployment:**
+    1. Go to your app settings on Streamlit Cloud
+    2. Click "Secrets" in the sidebar
+    3. Add: `GEMINI_API_KEY = your_key_here`
+    """)
     st.stop()
 
 try:
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    client = genai.Client(api_key=api_key)
 except Exception as e:
     st.error(f"❌ Failed to initialize Gemini API: {str(e)}")
     st.stop()
@@ -70,7 +89,10 @@ Answer clearly and provide helpful recommendations if possible.
 """
 
         try:
-            response = model.generate_content(ai_prompt)
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=ai_prompt
+            )
             ai_reply = response.text
 
         except Exception as e:
