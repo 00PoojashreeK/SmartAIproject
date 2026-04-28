@@ -64,19 +64,22 @@ def app():
         people = row.get("People_in_need", "N/A")
         volunteers = row.get("Volunteers", "N/A")
         priority = row.get("Priority", "LOW")
+        recommendation = row.get("Recommendation", "No recommendation available")
 
         tooltip_text = f"""
         Place: {place}
         People in Need: {people}
         Volunteers: {volunteers}
         Priority: {priority}
+        Recommendation: {recommendation}
         """
 
         popup_text = f"""
         <b>Place:</b> {place}<br>
         <b>People in Need:</b> {people}<br>
         <b>Volunteers:</b> {volunteers}<br>
-        <b>Priority:</b> {priority}
+        <b>Priority:</b> {priority}<br>
+        <b>Recommendation:</b> {recommendation}
         """
 
         folium.CircleMarker(
