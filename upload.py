@@ -4,19 +4,16 @@ import os
 
 def app():
 
-    st.header("Upload Dataset")
+    st.title("📂 Upload Dataset")
 
-    file=st.file_uploader("Upload CSV Dataset",type=["csv"])
+    file=st.file_uploader("Upload CSV",type=["csv"])
 
-    if file is not None:
+    if file:
 
         df=pd.read_csv(file)
-
         df.to_csv("dataset.csv",index=False)
 
-        st.success("Dataset uploaded successfully")
-
-        st.dataframe(df.head())
+        st.success("Dataset uploaded")
 
     if os.path.exists("dataset.csv"):
 
@@ -24,4 +21,12 @@ def app():
 
         st.subheader("Current Dataset")
 
-        st.dataframe(df.head())
+        st.dataframe(df,use_container_width=True)
+
+        if st.button("Delete Dataset"):
+
+            os.remove("dataset.csv")
+
+            st.success("Dataset deleted")
+
+            st.rerun()

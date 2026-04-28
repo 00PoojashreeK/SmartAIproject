@@ -2,23 +2,47 @@ import streamlit as st
 import pandas as pd
 import os
 
+def card(title,value):
+
+    st.markdown(f"""
+    <div class="card">
+    <h3>{title}</h3>
+    <h1>{value}</h1>
+    </div>
+    """,unsafe_allow_html=True)
+
 def app():
 
-    st.header("Dashboard")
+    st.title("📊 NGO Disaster Dashboard")
 
     if not os.path.exists("dataset.csv"):
-
         st.warning("Upload dataset first")
-
         return
 
     df=pd.read_csv("dataset.csv")
 
-    st.write("Rows:",df.shape[0])
-    st.write("Columns:",df.shape[1])
+    c1,c2,c3=st.columns(3)
 
-    st.dataframe(df)
+    with c1:
+        card("Locations",len(df))
 
-    st.subheader("Column Types")
+    with c2:
+        card("People in Need",df["People_in_need"].sum())
 
-    st.write(df.dtypes)
+    with c3:
+        card("Volunteers",df["Volunteers"].sum())
+
+    st.divider()
+
+    col1,col2=st.columns(2)
+
+    with col1:
+        st.subheader("People in Need")
+        st.bar_chart(df["People_in_need"])
+
+    with col2:
+        st.subheader("Volunteers")
+        st.bar_chart(df["Volunteers"])
+
+    st.subheader("Dataset Preview")
+    st.dataframe(df,use_container_width=True)

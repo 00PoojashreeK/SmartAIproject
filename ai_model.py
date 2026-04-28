@@ -1,128 +1,133 @@
 import streamlit as st
 import pandas as pd
 import os
-import numpy as np
-from sklearn.preprocessing import LabelEncoder
-from sklearn.ensemble import RandomForestClassifier
+
+
+def calculate_priority(row):
+
+    score = 0
+
+    if "People_in_need" in row:
+        score += row["People_in_need"]
+
+    if "Volunteers" in row:
+        score -= row["Volunteers"]
+
+    if "Food_need" in row:
+        if str(row["Food_need"]).lower() == "high":
+            score += 100
+        elif str(row["Food_need"]).lower() == "medium":
+            score += 50
+
+    if "Medical_need" in row:
+        if str(row["Medical_need"]).lower() == "high":
+            score += 100
+        elif str(row["Medical_need"]).lower() == "medium":
+            score += 50
+
+    if "NGO_available" in row:
+        if row["NGO_available"] == 0:
+            score += 200
+
+    if score > 700:
+        return "HIGH"
+    elif score > 300:
+        return "MEDIUM"
+    else:
+        return "LOW"
+
+
+def recommendation(priority):
+
+    if priority == "HIGH":
+        return "Deploy NGOs immediately with food & medical support"
+
+    elif priority == "MEDIUM":
+        return "Send volunteers and monitor situation"
+
+    else:
+        return "Area stable. Monitor only"
+
 
 def app():
-    st.header("NGO Intelligence: Priority & Gap Analysis")
+
+    st.title("🧠 AI Disaster Resource Prediction")
 
     if not os.path.exists("dataset.csv"):
-        st.warning("Please upload 'dataset.csv' first.")
+        st.warning("Please upload dataset first in Upload page")
         return
 
-    # Load Data
     df = pd.read_csv("dataset.csv")
-    original_columns = df.columns.tolist()
-    
-    st.subheader("Data Preview")
-    st.dataframe(df.head())
 
-    # Detect categories
-    potential_targets = []
-    for col in df.columns:
-        if df[col].dtype == 'object' or df[col].dtype == 'string' or df[col].nunique() < 15:
-            potential_targets.append(col)
-    
-    if not potential_targets:
-        potential_targets = original_columns
+    st.subheader("Dataset Preview")
+    st.dataframe(df.head(), use_container_width=True)
 
-    if st.button("Generate Detailed Priority Reports"):
-        with st.spinner("Analyzing data patterns..."):
-            
-            analysis_df = df.copy()
-            priority_matrix = pd.DataFrame(index=df.index)
-            
-            # --- PHASE 1: INDIVIDUAL COLUMN PRIORITIES ---
-            st.subheader("1. Individual Column Priorities")
-            
-            for col in potential_targets:
-                # Features are columns other than the current target
-                X = df.drop(columns=[col])
-                y = df[col].astype(str).fillna("None")
-                
-                # Preprocess Features
-                X_encoded = pd.DataFrame()
-                for x_col in X.columns:
-                    if pd.api.types.is_numeric_dtype(X[x_col]):
-                        X_encoded[x_col] = X[x_col].fillna(X[x_col].median())
-                    else:
-                        X_encoded[x_col] = LabelEncoder().fit_transform(X[x_col].astype(str).fillna('Missing'))
-                
-                # Preprocess Target
-                le = LabelEncoder()
-                y_encoded = le.fit_transform(y)
-                
-                # Train & Predict
-                model = RandomForestClassifier(n_estimators=100, random_state=42)
-                model.fit(X_encoded, y_encoded)
-                preds = model.predict(X_encoded)
-                pred_labels = le.inverse_transform(preds)
-                
-                # Store Prediction in analysis_df
-                analysis_df[f"AI_Suggested_{col}"] = pred_labels
-                
-                # Compare Actual vs Predicted
-                actual_val = analysis_df[col].astype(str).str.strip().str.lower()
-                predicted_val = analysis_df[f"AI_Suggested_{col}"].astype(str).str.strip().str.lower()
-                
-                # Identify Gaps
-                is_gap = (actual_val != predicted_val)
-                priority_matrix[col] = is_gap.astype(int)
+    # -------- Required columns --------
+    required_cols = ["People_in_need", "Volunteers"]
 
-                # Individual Column Expander
-                with st.expander(f"Priority Report: {col}"):
-                    ind_report = pd.DataFrame({
-                        "Current Value": df[col],
-                        "AI Suggested": pred_labels,
-                        "Status": is_gap.map({True: "🚨 High Priority", False: "✅ Optimal"})
-                    })
-                    st.dataframe(ind_report)
+    for col in required_cols:
+        if col not in df.columns:
+            st.error(f"Dataset must contain column: {col}")
+            return
 
-            # --- PHASE 2: OVERALL DATASET PRIORITY ---
-            st.divider()
-            st.subheader("2. Overall Dataset Priority (Global Analysis)")
+    # -------- Train AI Model --------
+    if st.button("Train AI Model"):
 
-            # Calculate the score
-            analysis_df["Global_Gap_Score"] = priority_matrix.mean(axis=1)
-            
-            # Generate Gap Reasons
-            reasons = []
-            for idx, row in priority_matrix.iterrows():
-                missing = [c for c in potential_targets if row[c] == 1]
-                reasons.append(f"Lacking: {', '.join(missing)}" if missing else "No gaps detected")
-            
-            analysis_df["Gap_Reason"] = reasons
+        df["Priority"] = df.apply(calculate_priority, axis=1)
+        df["Recommendation"] = df["Priority"].apply(recommendation)
 
-            def get_global_priority(score):
-                if score > 0.5: return "Rank 1: CRITICAL"
-                if score > 0.2: return "Rank 2: HIGH"
-                if score > 0:   return "Rank 3: MODERATE"
-                return "Rank 4: OPTIMAL"
+        df.to_csv("dataset.csv", index=False)
 
-            analysis_df["Overall_Priority"] = analysis_df["Global_Gap_Score"].apply(get_global_priority)
+        st.success("Model trained successfully and predictions saved!")
 
-            # Display Stats
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Total Rows", len(df))
-            m2.metric("Critical Gaps", len(analysis_df[analysis_df["Global_Gap_Score"] > 0.5]))
-            m3.metric("Systemic Gap %", f"{analysis_df['Global_Gap_Score'].mean():.1%}")
+    # -------- Show predictions --------
+    if "Priority" in df.columns:
 
-            # Master Table Fix: Sort BEFORE filtering columns
-            st.write("### Master Priority Table")
-            
-            # Sort the full dataframe first
-            analysis_df = analysis_df.sort_values(by="Global_Gap_Score", ascending=False)
-            
-            # Select only the columns we want to see
-            final_display_cols = original_columns + ["Overall_Priority", "Gap_Reason"]
-            st.dataframe(analysis_df[final_display_cols])
+        st.subheader("AI Predictions")
+        st.dataframe(df, use_container_width=True)
 
-            # Visualization
-            st.subheader("Gap Breakdown by Category")
-            gap_counts = priority_matrix.sum().sort_values(ascending=False)
-            st.bar_chart(gap_counts)
+        st.subheader("Priority Distribution")
+        st.bar_chart(df["Priority"].value_counts())
 
-if __name__ == "__main__":
-    app()
+    # -------- LOCATION SEARCH --------
+    st.subheader("🔎 Search Location")
+
+    place = st.text_input("Enter location name")
+
+    if place:
+
+        location_keywords = ["place", "location", "city", "district", "area"]
+
+        location_col = None
+
+        # detect location column automatically
+        for col in df.columns:
+            if any(key in col.lower() for key in location_keywords):
+                location_col = col
+                break
+
+        # fallback to PlaceName
+        if location_col is None and "PlaceName" in df.columns:
+            location_col = "PlaceName"
+
+        if location_col:
+
+            result = df[
+                df[location_col]
+                .astype(str)
+                .str.lower()
+                .str.contains(place.lower())
+            ]
+
+            if len(result) > 0:
+
+                st.success(f"Location found in column: {location_col}")
+                st.dataframe(result, use_container_width=True)
+
+            else:
+
+                st.warning("Location not found")
+
+        else:
+
+            st.error("No location column detected in dataset")
